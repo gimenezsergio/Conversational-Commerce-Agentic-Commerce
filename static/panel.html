@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Pedidos | Pastelería Dulce Aroma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .panel-container {
+      max-width: 1200px;
+      margin: 30px auto 80px;
+      padding: 0 20px;
+    }
+
+    .panel-header-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: white;
+      padding: 24px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+
+    .panel-title-area h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .panel-stats {
+      display: flex;
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-page);
+      border: 1px solid var(--border-color);
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: block;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+    }
+
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+
+    .order-card {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .order-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .order-card-header {
+      padding: 14px 18px;
+      background: #faf6f3;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .order-id-badge {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--primary);
+    }
+
+    .order-date {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .order-card-body {
+      padding: 16px 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .client-details {
+      background: #fbf9f7;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--primary);
+      font-size: 0.88rem;
+    }
+
+    .client-name {
+      font-weight: 700;
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .client-row {
+      display: flex;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-top: 2px;
+    }
+
+    .items-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .order-items-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .order-item-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.86rem;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed #efe6e1;
+    }
+
+    .order-card-footer {
+      padding: 14px 18px;
+      background: #faf6f3;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .order-total-block {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .order-total-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .status-select {
+      padding: 6px 12px;
+      border-radius: 99px;
+      border: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+      background: white;
+    }
+
+    .status-select.pendiente { color: #d97706; border-color: #fcd34d; background: #fffbeb; }
+    .status-select.en_preparacion { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+    .status-select.listo { color: #059669; border-color: #a7f3d0; background: #ecfdf5; }
+    .status-select.entregado { color: #4b5563; border-color: #e5e7eb; background: #f3f4f6; }
+
+    .btn-refresh {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-refresh:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    @media (max-width: 768px) {
+      .nav-container {
+        padding: 10px 14px;
+      }
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.4rem;
+      }
+      .brand-name {
+        font-size: 1.15rem;
+      }
+      .brand-subtitle {
+        font-size: 0.65rem;
+      }
+      .panel-container {
+        padding: 0 14px;
+        margin: 16px auto 60px;
+      }
+      .panel-header-box {
+        padding: 16px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .panel-stats {
+        flex-wrap: wrap;
+        justify-content: space-between;
+      }
+      .stat-card {
+        flex: 1;
+        min-width: 120px;
+      }
+      .orders-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header de navegación -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-icon">🧁</span>
+        <div>
+          <h1 class="brand-name">Dulce Aroma</h1>
+          <span class="brand-subtitle">Panel de Pedidos & Cocina</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <a href="/" class="btn-secondary" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
+          🏪 Ir a la Tienda (E-commerce)
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="panel-container">
+    <div class="panel-header-box">
+      <div class="panel-title-area">
+        <h2>Pedidos Recibidos en Vivo</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          Consultas y pedidos procesados por <strong>DulceBot (IA)</strong> y guardados en <strong>SQLite</strong>.
+        </p>
+      </div>
+
+      <div class="panel-stats">
+        <div class="stat-card">
+          <span id="statTotalOrders" class="stat-number">0</span>
+          <span class="stat-label">Total Pedidos</span>
+        </div>
+        <div class="stat-card">
+          <span id="statTotalRevenue" class="stat-number">$0</span>
+          <span class="stat-label">Facturación</span>
+        </div>
+        <button id="btnRefreshOrders" class="btn-refresh">
+          🔄 Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Grilla de tarjetas de pedidos -->
+    <div id="ordersContainer" class="orders-grid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #888;">Cargando pedidos desde SQLite...</div>
+    </div>
+  </main>
+
+  <script>
+    const formatCurrency = (val) => "$" + Number(val).toLocaleString("es-AR");
+
+    async function loadOrders() {
+      const container = document.getElementById("ordersContainer");
+      try {
+        const res = await fetch("/api/pedidos");
+        const data = await res.json();
+        const pedidos = data.pedidos || [];
+
+        // Estadísticas
+        document.getElementById("statTotalOrders").innerText = pedidos.length;
+        const totalRev = pedidos.reduce((sum, p) => sum + (p.total || 0), 0);
+        document.getElementById("statTotalRevenue").innerText = formatCurrency(totalRev);
+
+        if (pedidos.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: white; border-radius: 14px; border: 1px dashed var(--border-color); color: #888;">
+              <span style="font-size: 3rem; display: block; margin-bottom: 12px;">📭</span>
+              <h3>No hay pedidos registrados todavía</h3>
+              <p style="margin-top: 6px;">Ingresá a la tienda y pedile a DulceBot que tome tu primer pedido para verlo acá en tiempo real.</p>
+              <a href="/" style="display: inline-block; margin-top: 14px; background: var(--primary); color: white; padding: 10px 20px; border-radius: 99px; text-decoration: none; font-weight: 700;">Hacer un pedido de prueba</a>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = pedidos.map(p => {
+          const items = p.items || [];
+          const fechaFormateada = new Date(p.fecha).toLocaleString("es-AR", {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          return `
+            <div class="order-card" id="card-pedido-${p.id}">
+              <div class="order-card-header">
+                <div>
+                  <span class="order-id-badge">Pedido #${p.id}</span>
+                  <div class="order-date">📅 ${fechaFormateada}</div>
+                </div>
+                <select class="status-select ${p.estado || 'pendiente'}" onchange="updateOrderStatus(${p.id}, this.value, this)">
+                  <option value="pendiente" ${p.estado === 'pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
+                  <option value="en_preparacion" ${p.estado === 'en_preparacion' ? 'selected' : ''}>👩‍🍳 En preparación</option>
+                  <option value="listo" ${p.estado === 'listo' ? 'selected' : ''}>✨ Listo para entrega</option>
+                  <option value="entregado" ${p.estado === 'entregado' ? 'selected' : ''}>✅ Entregado</option>
+                </select>
+              </div>
+
+              <div class="order-card-body">
+                <div class="client-details">
+                  <span class="client-name">👤 ${escapeHtml(p.cliente_nombre)}</span>
+                  <div class="client-row"><span>📞</span> <span>${escapeHtml(p.telefono || 'Sin teléfono')}</span></div>
+                  <div class="client-row"><span>📍</span> <span><strong>${escapeHtml(p.tipo_entrega || 'Retiro')}</strong>: ${escapeHtml(p.direccion || 'Local')}</span></div>
+                  <div class="client-row"><span>💳</span> <span>Pago: ${escapeHtml(p.metodo_pago || 'No especificado')}</span></div>
+                </div>
+
+                <div>
+                  <div class="items-title">Ítems encargados:</div>
+                  <ul class="order-items-list">
+                    ${items.map(it => `
+                      <li class="order-item-row" style="flex-direction: column; align-items: flex-start; gap: 2px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%;">
+                          <span><strong>${it.cantidad}x</strong> ${escapeHtml(it.nombre)}</span>
+                          <span>${formatCurrency(it.subtotal || (it.precio * it.cantidad))}</span>
+                        </div>
+                        ${it.notas ? `<div style="font-size: 0.76rem; color: #b45309; background: #fef3c7; padding: 2px 6px; border-radius: 4px; margin-top: 2px;">🎨 <strong>Personalización:</strong> ${escapeHtml(it.notas)}</div>` : ''}
+                      </li>
+                    `).join("")}
+                  </ul>
+                </div>
+              </div>
+
+              <div class="order-card-footer">
+                <div class="order-total-block">
+                  <span style="font-size: 0.75rem; color: #888; text-transform: uppercase;">Total Abonar:</span>
+                  <span class="order-total-val">${formatCurrency(p.total)}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (err) {
+        console.error("Error al cargar pedidos:", err);
+        container.innerHTML = `<div style="grid-column: 1/-1; color: red; text-align: center;">Error al conectar con la base de datos.</div>`;
+      }
+    }
+
+    async function updateOrderStatus(pedidoId, nuevoEstado, selectElement) {
+      selectElement.className = `status-select ${nuevoEstado}`;
+      try {
+        await fetch("/api/pedidos/estado", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pedido_id: pedidoId, estado: nuevoEstado })
+        });
+      } catch (err) {
+        console.error("Error al actualizar estado:", err);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    document.getElementById("btnRefreshOrders").addEventListener("click", loadOrders);
+    document.addEventListener("DOMContentLoaded", loadOrders);
+    // Auto-actualizar cada 15 segundos
+    setInterval(loadOrders, 15000);
+  </script>
+</body>
+</html>

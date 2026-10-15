@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dulce Aroma | Pastelería Artesanal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header principal -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-icon">🧁</span>
+        <div>
+          <h1 class="brand-name">Dulce Aroma</h1>
+          <span class="brand-subtitle">Pastelería & Confitería Fina</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <a href="/panel" class="btn-secondary btn-nav-panel" title="Ir al panel de pedidos" style="text-decoration: none; display: flex; align-items: center; gap: 6px;">
+          <span>📋</span> <span class="nav-btn-text">Panel</span>
+        </a>
+        <button id="btnOpenCart" class="btn-cart">
+          <span>🛒</span> <span class="cart-label nav-btn-text">Carrito</span>
+          <span id="cartCountBadge" class="badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-tag">✨ Horneado con pasión todos los días</span>
+      <h2>Tentate con nuestros sabores artesanales</h2>
+      <p>Pedí desde el catálogo o <strong>hablá con nuestro asistente inteligente</strong> en el botón flotante para encargar tu pedido personalizado.</p>
+      <div class="hero-chips">
+        <button class="chip-filter active" data-category="todos">Todos los productos</button>
+        <button class="chip-filter" data-category="Tortas">🎂 Tortas</button>
+        <button class="chip-filter" data-category="Tartas">🥧 Tartas Dulces</button>
+        <button class="chip-filter" data-category="Facturas">🥐 Facturas</button>
+        <button class="chip-filter" data-category="Budines">🍞 Budines</button>
+        <button class="chip-filter" data-category="Postres">🍮 Postres</button>
+        <button class="chip-filter" data-category="Salados">🥪 Salados</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catálogo de productos -->
+  <main class="catalog-section">
+    <div class="catalog-header">
+      <h3 id="catalogTitle">Todos nuestros productos</h3>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre o ingrediente...">
+        <span class="search-icon">🔍</span>
+      </div>
+    </div>
+
+    <div id="productsGrid" class="products-grid">
+      <!-- Se inyectan las cards con JavaScript -->
+      <div class="loading-state">Cargando productos...</div>
+    </div>
+  </main>
+
+  <!-- Drawer / Modal Lateral de Carrito -->
+  <div id="cartDrawer" class="cart-drawer">
+    <div class="drawer-header">
+      <h3>Tu Pedido</h3>
+      <button id="btnCloseCart" class="btn-close">&times;</button>
+    </div>
+    <div id="cartItemsList" class="drawer-body">
+      <!-- Items del carrito -->
+    </div>
+    <div class="drawer-footer">
+      <div class="cart-total-row">
+        <span>Total:</span>
+        <strong id="cartDrawerTotal">$0</strong>
+      </div>
+      <button id="btnAssistCart" class="btn-primary full-width">
+        💬 Continuar y confirmar con el Asistente IA
+      </button>
+    </div>
+  </div>
+  <div id="drawerOverlay" class="drawer-overlay"></div>
+
+  <!-- Modal Panel Pastelero / Pedidos -->
+  <div id="adminModal" class="modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>📋 Registro de Pedidos (Base de Datos SQLite)</h3>
+        <button id="btnCloseAdmin" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="admin-desc">Aquí se visualizan los pedidos que la IA y los clientes han guardado en tiempo real en la base de datos.</p>
+        <div id="adminOrdersList" class="orders-table-wrapper">
+          <!-- Tabla de pedidos -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Widget Flotante del Chat IA -->
+  <div class="chat-widget-wrapper">
+    <!-- Ventana del Chat -->
+    <div id="chatWindow" class="chat-window">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="avatar-bot">🤖</div>
+          <div>
+            <h4>DulceBot</h4>
+            <span class="bot-status"><span class="status-dot"></span> Asistente IA Activo</span>
+          </div>
+        </div>
+        <button id="btnCloseChat" class="btn-header-action" title="Minimizar">&times;</button>
+      </div>
+
+      <!-- Resumen compacto del pedido en el chat -->
+      <div id="chatCartPill" class="chat-cart-pill hidden">
+        <span>🛒 En tu carrito: <strong id="chatCartCount">0</strong> ítems</span>
+        <strong id="chatCartTotal">$0</strong>
+      </div>
+
+      <!-- Mensajes -->
+      <div id="chatMessages" class="chat-messages">
+        <div class="message bot-message">
+          <p>¡Hola! 👋 Soy <strong>DulceBot</strong>, el asistente de <em>Dulce Aroma</em>.</p>
+          <p>Puedo contarte qué tortas tenemos, recomendarte según tus gustos y tomar tu pedido directamente desde acá. ¿Qué tenías ganas de disfrutar hoy?</p>
+        </div>
+      </div>
+
+      <!-- Sugerencias rápidas -->
+      <div class="chat-quick-suggestions">
+        <button class="suggestion-chip">¿Qué tortas tenés?</button>
+        <button class="suggestion-chip">Quiero 1 Lemon Pie</button>
+        <button class="suggestion-chip">1 docena de medialunas</button>
+        <button class="suggestion-chip">Confirmar mi pedido</button>
+      </div>
+
+      <!-- Input de mensaje -->
+      <form id="chatForm" class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Escribí lo que querés pedir o consultar..." autocomplete="off">
+        <button type="submit" id="btnSendChat" class="btn-send" title="Enviar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Botón circular flotante -->
+    <button id="btnChatToggle" class="chat-toggle-btn" title="Chatear con el asistente">
+      <span class="chat-icon">💬</span>
+      <span class="chat-toggle-text">Pedir con IA</span>
+    </button>
+  </div>
+
+  <!-- Librerías ligeras para renderizado de Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
