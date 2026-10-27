@@ -13,7 +13,7 @@ def execute_tool(tool_name, tool_args, session_id):
         categoria = tool_args.get("categoria")
         termino = tool_args.get("termino")
         
-        query = "SELECT id, nombre, categoria, precio, unidad, descripcion FROM productos WHERE 1=1"
+        query = "SELECT id, nombre, categoria, precio, unidad, descripcion, imagen FROM productos WHERE 1=1"
         params = []
         if categoria:
             query += " AND categoria LIKE ?"
