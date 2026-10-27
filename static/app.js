@@ -48,6 +48,11 @@ const formatCurrency = (val) => "$" + Number(val).toLocaleString("es-AR");
 
 // 1. CARGA INICIAL
 async function initApp() {
+  if (chatInput) {
+    chatInput.disabled = false;
+    chatInput.removeAttribute("disabled");
+    chatInput.value = "";
+  }
   await fetchProducts();
   await refreshCart();
   setupEventListeners();
@@ -211,8 +216,22 @@ function renderCart() {
 }
 
 // 5. CHAT CON GEMINI Y FUNCTION CALLING
+function scrollChatToBottom() {
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
+function updateChatViewport() {
+  if (window.visualViewport && chatWindow && chatWindow.classList.contains("open") && window.innerWidth <= 768) {
+    const vh = window.visualViewport.height;
+    document.documentElement.style.setProperty("--visual-viewport-height", `${vh}px`);
+    scrollChatToBottom();
+  }
+}
+
 async function sendChatMessage(userText) {
-  if (!userText.trim()) return;
+  if (!userText || !userText.trim()) return;
 
   // Renderizar mensaje del usuario
   appendMessage(userText, "user-message");
@@ -222,10 +241,14 @@ async function sendChatMessage(userText) {
   // Placeholder 'Pensando...'
   const loadingId = appendMessage("Pensando y consultando las delicias...", "bot-message", true);
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: jsonStringifySafe({
         session_id: AppState.sessionId,
         message: userText,
@@ -233,6 +256,7 @@ async function sendChatMessage(userText) {
       })
     });
 
+    clearTimeout(timeoutId);
     const data = await res.json();
     removeMessage(loadingId);
 
@@ -266,12 +290,19 @@ async function sendChatMessage(userText) {
       appendMessage("Hubo una demora al responder. Probá nuevamente.", "bot-message");
     }
   } catch (err) {
+    clearTimeout(timeoutId);
     console.error("Error en chat:", err);
     removeMessage(loadingId);
     appendMessage("Error de conexión con el asistente. Revisá el servidor.", "bot-message");
   } finally {
     chatInput.disabled = false;
-    chatInput.focus();
+    chatInput.removeAttribute("disabled");
+    // En desktop mantenemos el foco para escribir rápido.
+    // En móvil NO forzamos focus para evitar que se abra el teclado tapando la respuesta del bot.
+    if (window.innerWidth > 768) {
+      chatInput.focus();
+    }
+    scrollChatToBottom();
   }
 }
 
@@ -304,10 +335,25 @@ function appendMessage(rawContent, className, isLoading = false, isRawHtml = fal
   } else {
     // Mensaje de la IA formateado con Markdown limpio
     msgDiv.innerHTML = renderMarkdownSafe(rawContent);
+
+    // Si el mensaje incluye imágenes (ej. fotos de tortas), recalcular scroll al cargar
+    msgDiv.querySelectorAll("img").forEach(img => {
+      img.addEventListener("load", () => {
+        scrollChatToBottom();
+      });
+    });
   }
 
   chatMessages.appendChild(msgDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  // Scroll hacia el final garantizado en el próximo frame
+  scrollChatToBottom();
+  requestAnimationFrame(() => {
+    scrollChatToBottom();
+    // En mobile aseguramos que el inicio o final del nuevo mensaje sea visible
+    msgDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
   return msgDiv.id;
 }
 
@@ -371,64 +417,132 @@ async function openAdminPanel() {
 // 7. EVENT LISTENERS
 function setupEventListeners() {
   // Búsqueda y Filtros
-  searchInput.addEventListener("input", renderProducts);
+  if (searchInput) searchInput.addEventListener("input", renderProducts);
 
-  categoryChips.forEach(chip => {
-    chip.addEventListener("click", () => {
-      categoryChips.forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-      AppState.activeCategory = chip.dataset.category;
-      catalogTitle.innerText = AppState.activeCategory === "todos" ? "Todos nuestros productos" : `Categoría: ${chip.innerText}`;
-      renderProducts();
+  if (categoryChips) {
+    categoryChips.forEach(chip => {
+      chip.addEventListener("click", () => {
+        categoryChips.forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        AppState.activeCategory = chip.dataset.category;
+        if (catalogTitle) {
+          catalogTitle.innerText = AppState.activeCategory === "todos" ? "Todos nuestros productos" : `Categoría: ${chip.innerText}`;
+        }
+        renderProducts();
+      });
     });
-  });
+  }
 
   // Drawer Carrito
-  const openCart = () => { cartDrawer.classList.add("open"); drawerOverlay.classList.add("active"); };
-  const closeCart = () => { cartDrawer.classList.remove("open"); drawerOverlay.classList.remove("active"); };
-  btnOpenCart.addEventListener("click", openCart);
-  btnCloseCart.addEventListener("click", closeCart);
-  drawerOverlay.addEventListener("click", closeCart);
+  const openCart = () => { if (cartDrawer) cartDrawer.classList.add("open"); if (drawerOverlay) drawerOverlay.classList.add("active"); };
+  const closeCart = () => { if (cartDrawer) cartDrawer.classList.remove("open"); if (drawerOverlay) drawerOverlay.classList.remove("active"); };
+  if (btnOpenCart) btnOpenCart.addEventListener("click", openCart);
+  if (btnCloseCart) btnCloseCart.addEventListener("click", closeCart);
+  if (drawerOverlay) drawerOverlay.addEventListener("click", closeCart);
 
-  btnAssistCart.addEventListener("click", () => {
-    closeCart();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", updateChatViewport);
+    window.visualViewport.addEventListener("scroll", updateChatViewport);
+  }
+
+  const openChatWindow = () => {
+    if (!chatWindow) return;
     chatWindow.classList.add("open");
-    sendChatMessage("Hola, quiero confirmar lo que tengo en mi carrito, ¿cómo seguimos?");
-  });
+    if (window.innerWidth <= 768) {
+      document.body.classList.add("chat-modal-open");
+    }
+    updateChatViewport();
+    setTimeout(() => {
+      if (chatInput) chatInput.focus();
+      scrollChatToBottom();
+    }, 150);
+  };
+
+  const closeChatWindow = () => {
+    if (!chatWindow) return;
+    chatWindow.classList.remove("open");
+    document.body.classList.remove("chat-modal-open");
+    document.documentElement.style.removeProperty("--visual-viewport-height");
+  };
+
+  if (btnAssistCart) {
+    btnAssistCart.addEventListener("click", () => {
+      closeCart();
+      openChatWindow();
+      sendChatMessage("Hola, quiero confirmar lo que tengo en mi carrito, ¿cómo seguimos?");
+    });
+  }
 
   // Chat Widget Toggle
-  btnChatToggle.addEventListener("click", () => {
-    chatWindow.classList.toggle("open");
-    if (chatWindow.classList.contains("open")) {
-      chatInput.focus();
+  if (btnChatToggle) {
+    btnChatToggle.addEventListener("click", () => {
+      if (chatWindow && chatWindow.classList.contains("open")) {
+        closeChatWindow();
+      } else {
+        openChatWindow();
+      }
+    });
+  }
+
+  if (btnCloseChat) btnCloseChat.addEventListener("click", closeChatWindow);
+
+  // Asegurar visibilidad del input y scroll al hacer focus con teclado virtual
+  if (chatInput) {
+    chatInput.addEventListener("focus", () => {
+      setTimeout(() => {
+        updateChatViewport();
+        chatInput.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        scrollChatToBottom();
+      }, 280);
+    });
+  }
+
+  // Enviar mensaje en Chat (soporta Enter, submit del formulario y click directo en el botón)
+  const handleChatSubmit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
     }
-  });
+    const txt = chatInput.value ? chatInput.value.trim() : "";
+    if (txt) {
+      sendChatMessage(txt);
+    }
+  };
 
-  btnCloseChat.addEventListener("click", () => {
-    chatWindow.classList.remove("open");
-  });
+  chatForm.addEventListener("submit", handleChatSubmit);
 
-  // Enviar mensaje en Chat
-  chatForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const txt = chatInput.value;
-    sendChatMessage(txt);
+  const btnSendChat = document.getElementById("btnSendChat");
+  if (btnSendChat) {
+    btnSendChat.addEventListener("click", handleChatSubmit);
+  }
+
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit(e);
+    }
   });
 
   // Chips de sugerencia rápida
   quickSuggestions.forEach(chip => {
     chip.addEventListener("click", () => {
-      chatWindow.classList.add("open");
+      openChatWindow();
       sendChatMessage(chip.innerText);
     });
   });
 
   // Panel Pastelero
-  btnOpenOrdersAdmin.addEventListener("click", openAdminPanel);
-  btnCloseAdmin.addEventListener("click", () => adminModal.classList.remove("active"));
-  adminModal.addEventListener("click", (e) => {
-    if (e.target === adminModal) adminModal.classList.remove("active");
-  });
+  if (btnOpenOrdersAdmin) {
+    btnOpenOrdersAdmin.addEventListener("click", openAdminPanel);
+  }
+  if (btnCloseAdmin && adminModal) {
+    btnCloseAdmin.addEventListener("click", () => adminModal.classList.remove("active"));
+  }
+  if (adminModal) {
+    adminModal.addEventListener("click", (e) => {
+      if (e.target === adminModal) adminModal.classList.remove("active");
+    });
+  }
 }
 
 function jsonStringifySafe(obj) {

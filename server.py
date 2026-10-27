@@ -155,14 +155,30 @@ class PasteleriaHandler(http.server.SimpleHTTPRequestHandler):
             history = data.get("history", []) # Lista de {role: "user"|"model", parts: [{text: ...}]}
             user_message = data.get("message", "")
 
-            # Mantener los últimos turnos para no sobrecargar el límite de tokens por minuto (TPM / 429)
+            print(f"[CHAT] Mensaje recibido: '{user_message}' de sesión: {session_id}")
+
+            # Mantener los últimos turnos y garantizar alternancia estricta user <-> model
             trimmed_history = history[-10:] if len(history) > 10 else list(history)
-            current_contents = list(trimmed_history)
+            clean_contents = []
+            for item in trimmed_history:
+                role = item.get("role")
+                parts = item.get("parts", [])
+                if not parts:
+                    continue
+                if clean_contents and clean_contents[-1]["role"] == role:
+                    clean_contents[-1]["parts"].extend(parts)
+                else:
+                    clean_contents.append({"role": role, "parts": list(parts)})
+
             if user_message:
-                current_contents.append({
-                    "role": "user",
-                    "parts": [{"text": user_message}]
-                })
+                if clean_contents and clean_contents[-1]["role"] == "user":
+                    clean_contents[-1]["parts"].append({"text": user_message})
+                else:
+                    clean_contents.append({
+                        "role": "user",
+                        "parts": [{"text": user_message}]
+                    })
+            current_contents = clean_contents
 
             try:
                 executed_tools = []
