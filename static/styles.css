@@ -510,13 +510,16 @@ body {
 }
 
 .chat-messages {
-  flex: 1;
+  flex: 1 1 0;
+  min-height: 0;
   padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: #faf7f5;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .message {
@@ -566,6 +569,19 @@ body {
   color: var(--primary);
 }
 
+.bot-message img {
+  width: 100%;
+  max-width: 260px;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+  margin-bottom: 6px;
+  display: block;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #ebdcd5;
+}
+
 .user-message {
   align-self: flex-end;
   background: var(--primary);
@@ -584,6 +600,7 @@ body {
 }
 
 .chat-quick-suggestions {
+  flex-shrink: 0;
   padding: 8px 12px;
   background: white;
   border-top: 1px solid #f3ece8;
@@ -617,8 +634,11 @@ body {
 }
 
 .chat-input-row {
+  flex-shrink: 0;
   display: flex;
+  align-items: center;
   padding: 10px 14px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
   background: white;
   border-top: 1px solid var(--border-color);
   gap: 8px;
@@ -629,7 +649,7 @@ body {
   border: 1px solid var(--border-color);
   padding: 10px 14px;
   border-radius: 99px;
-  font-size: 0.88rem;
+  font-size: 16px; /* Previene el zoom automático indeseado en iOS Safari */
   outline: none;
 }
 
@@ -653,6 +673,14 @@ body {
 
 .btn-send:hover {
   background: var(--primary-hover);
+}
+
+.btn-send svg {
+  pointer-events: none;
+}
+
+.chat-widget-wrapper:has(.chat-window.open) .chat-toggle-btn {
+  display: none !important;
 }
 
 /* DRAWER CARRITO */
@@ -1027,12 +1055,26 @@ body {
     right: 0;
     bottom: 0;
     width: 100vw;
-    height: 100vh;
+    /* Altura dinámica adaptada a la presencia de barras del navegador y teclado virtual */
+    height: 100%;
+    height: 100dvh;
+    height: var(--visual-viewport-height, 100dvh);
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: 100dvh;
+    max-height: var(--visual-viewport-height, 100dvh);
     margin-bottom: 0;
     border-radius: 0;
     z-index: 250;
+    display: none;
+    flex-direction: column;
+  }
+
+  .chat-window.open {
+    display: flex;
+  }
+
+  body.chat-modal-open {
+    overflow: hidden;
   }
 
   /* Drawer Carrito */
