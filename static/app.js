@@ -311,7 +311,7 @@ function renderMarkdownSafe(content) {
     // Configurar marked para saltos de línea suaves
     marked.setOptions({ breaks: true, gfm: true });
     const rawHtml = marked.parse(content);
-    return DOMPurify.sanitize(rawHtml);
+    return DOMPurify.sanitize(rawHtml, { ADD_ATTR: ['class'] });
   }
   // Fallback simple si no cargó el CDN
   return content
